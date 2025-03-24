@@ -2,25 +2,19 @@
 
 namespace App\Http\Requests\Project;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProjectUpdateRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'assignee_id' => ['required', 'int', 'exists:users,id'],
-            'deadline_date' => ['required', 'date']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'title.required' => 'Проекту нужно название',
-            'assignee_id.exists' => 'Выбранный ответственный пользователь не существует',
-            'deadline_date.required' => 'Установите дедлайн'
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:255',
+            'assigned_to' => 'sometimes|exists:users,id',
         ];
     }
 }

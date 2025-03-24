@@ -2,112 +2,85 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Project;
-use App\Http\Requests\Project\ProjectStoreRequest;
 use App\Http\Requests\Project\ProjectUpdateRequest;
-use App\Http\Middleware\AuthorizeMiddleware;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Gate;
+use App\Models\Project;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
-class ProjectController extends Controller implements HasMiddleware
+class ProjectController extends Controller
 {
-    public static function middleware(): array
-    {
-        return [
-            new Middleware(AuthorizeMiddleware::class, except: ['store', 'update'])
-        ];
-    }
-    
     /**
-     * Список проектов
-     * 
-     * GET /projects
+     * Display a listing of the resource. (10)
      */
     public function index()
     {
-        Gate::authorize('viewAll', Project::class);
-        $projects = Project::all();
-        
-        return view('blade_pages.project.index', ['projects' => $projects]);
+        return Inertia::render('Project/Index', [
+            'projects' => Project::all(), // (1)
+            'users' => User::pluck('username', 'id'),
+        ]);
     }
 
     /**
-     * Форма для создания проектов
-     * 
-     * GET /projects/create
+     * Show the form for creating a new resource.
      */
     public function create()
     {
-        Gate::authorize('create', Project::class);
-        $users = User::all();
-
-        return view('blade_pages.project.create', ['users' => $users]);
+        return Inertia::render('Project/Create', [
+            'users' => User::pluck('username', 'id'),
+            'default_assigned_to' => (int) env('PROJECT_DEFAULT_ASSIGNEE'), // (2)
+        ]);
     }
 
     /**
-     * Сохранить новый проект в БД
-     * 
-     * POST /projects
+     * Store a newly created resource in storage.
      */
-    public function store(ProjectStoreRequest $request)
+    public function store(Request $request)
     {
-        Gate::authorize('create', Project::class);
-        Project::create($request->all() + ['owner_id' => auth()->id()]);
+        $request->validate([ // (3)
+            'name' => 'required',
+            'description' => 'required',
+            'assigned_to' => 'required',
+        ]);
 
-        return redirect()->route('projects.index', ['access' => 'yes']);
+        Project::create($request->all());
+
+        return redirect()->route('projects.index');
     }
 
     /**
-     * Получить проект по id
-     * 
-     * GET /projects/{id}
+     * Show the form for editing the specified resource.
      */
-    public function show(Project $project)
+    public function edit(string $id) // (5)
     {
-        Gate::authorize('view', $project);
-
-        return view('blade_pages.project.show', ['project' => $project]);
+        $instance = Project::findOrFail($id); // (6)
+        return Inertia::render('Project/Edit', [
+            'initialValues' => $instance->toArray(), // (7)
+            'users' => User::pluck('username', 'id'),
+        ]);
     }
 
     /**
-     * Форма редактирования проекта
-     * 
-     * GET /projects/{id}/edit
-     */
-    public function edit(Project $project)
-    {
-        Gate::authorize('update', $project);
-        $users = User::all();
-
-        return view('blade_pages.project.edit', ['project' => $project, 'users' => $users]);
-    }
-
-    /**
-     * Сохранить изменения в проекте
-     * 
-     * PUT /projects/{id}
+     * Update the specified resource in storage.
      */
     public function update(ProjectUpdateRequest $request, Project $project)
     {
-        Gate::authorize('update', $project);
-        $project->update($request->validated());
+        // (9)
+        $project->name = $request->name;
+        $project->description = $request->description;
+        $project->assigned_to = $request->assigned_to();
+        $project->save();
 
-        return redirect()->route('projects.index', ['access' => 'yes']);
+        return redirect()->route('projects.index');
     }
 
     /**
-     * Удалить проект
-     * 
-     * DELETE /projects/{id}
+     * Remove the specified resource from storage.
      */
     public function destroy(Project $project)
-    {   
-        Gate::authorize('delete', $project);
+    {
         $project->delete();
 
-        return redirect()->route('projects.index', ['access' => 'yes']);
+        return redirect()->route('projects.index');
     }
 }

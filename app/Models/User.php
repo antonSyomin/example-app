@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -34,6 +34,11 @@ class User extends Authenticatable
             'password' => 'hashed',
             'created_at' => 'datetime:Y-m-d H:i:s',
         ];
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
     }
 
     /**
@@ -68,13 +73,8 @@ class User extends Authenticatable
         return $query;
     }
 
-    public function ownedProjects(): HasMany
+    public function projectCount() // (8)
     {
-        return $this->hasMany('App\Models\Project', 'owner_id');
-    }
-
-    public function assignedProjects(): HasMany
-    {
-        return $this->hasMany('App\Models\Project', 'assignee_id');
+        return Project::where('assigned_to', $this->id)->count();
     }
 }
