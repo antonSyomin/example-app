@@ -4,42 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Contracts\Database\Query\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Project extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'title',
-        'owner_id',
-        'is_active',
-        'assignee_id',
-        'deadline_date',
+        'name',
+        'description',
+        'assigned_to',
     ];
 
-    protected $casts = [
-        'owner_id' => 'integer',
-        'assignee_id' => 'integer',
-        'deadline_date' => 'date'
-    ];
-
-    public function owner(): BelongsTo
+    public function getName() // (4)
     {
-        return $this->belongsTo('App\Models\User', 'owner_id');
+        return $this->name;
     }
 
-    public function assignee(): BelongsTo
+    public function setName($name) // (4)
     {
-        return $this->belongsTo('App\Models\User', 'assignee_id');
-    }
-
-    /**
-     * Добавляет к запросу условие «дедлайн истёк»
-     */
-    public function scopeExpired(Builder $query): Builder
-    {
-        return $query->where('deadline_date', '<', date('Y-m-d'));
+        $this->name = $name;
     }
 }

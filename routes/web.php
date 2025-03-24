@@ -1,9 +1,8 @@
 <?php
 
+use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ProjectController;
-use App\Http\Middleware\AuthorizeMiddleware;
 
 /**
  * Приветствие
@@ -18,6 +17,5 @@ Route::post('/login/', [UserController::class, 'loginPost']);
 Route::middleware('auth')->group(function () {
     Route::post('/logout/', [UserController::class, 'logout']);
     Route::resource('users', UserController::class)->scoped(['user' => 'username']);
-    Route::resource('projects', ProjectController::class);
+    Route::resource('projects', ProjectController::class)->except(['show']);
 })->where(['user' => '[a-zA-Z0-9]+']);
-
